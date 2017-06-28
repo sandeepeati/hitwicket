@@ -263,7 +263,7 @@ def innings(team_name, batting, bowling, inning, target=120*6):
     for i in batting_order:
         n = batting_statistics[i[0]]
         inning_bat.append(n)
-        print(str(n[0]).ljust(20), str(n[1]).ljust(20), str(n[2]).ljust(20), str(n[3]).ljust(20), str(n[4]).ljust(20), str('%0.2f' %((n[1] / n[2]) * 100)).ljust(20) if (n[5] != 'dnb' or n[5] != 'Not Out') else '0.00'.ljust(20))
+        print(str(n[0]).ljust(20), str(n[1]).ljust(20), str(n[2]).ljust(20), str(n[3]).ljust(20), str(n[4]).ljust(20), str('%0.2f' %((n[1] / n[2]) * 100)).ljust(20) if (n[2] != 0) else '0.00'.ljust(20))
     print('\n')
     print('-'*columns)
     print(total, '/', wickets)
