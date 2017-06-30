@@ -37,12 +37,12 @@ def innings(team_name, batting, bowling, inning, target=120*6):
 
     # statistics holding template creation
     for i in batting_order:
-        batting_statistics[i[0]] = [i[0], 0, 0, 0, 0, 'dnb', batting_order.index(i)]
+        batting_statistics[i[0]] = [i[0], 0, 0, 0, 0, 'dnb', batting.index(i)]
 
     inning_bat = []
 
     for j in bowling_order:
-        bowling_statistics[j[0]] = [j[0], 0.0, 0, 0, bowling_order.index(j)]
+        bowling_statistics[j[0]] = [j[0], 0.0, 0, 0, bowling.index(j)]
 
     inning_bowl = []
 
@@ -131,39 +131,34 @@ def innings(team_name, batting, bowling, inning, target=120*6):
         bowler_index = bowling_statistics[bowler][4]
 
         # probabilities calculation
-        bat_skill = batting[batsman_index][1] / 500
-        bowl_skill = bowling[bowler_index][2] / 500
-        bat_form = (batting[batsman_index][5]) / 1000
-        bat_fitness = (batting[batsman_index][6]) / 1000
-        bowl_form = bowling[bowler_index][5] / 1000
-        bowl_fitness = bowling[bowler_index][6] / 1000
-        o = (10 - int(overs)) / 2000
-        wicket_prob = (10 - wickets) / 1000
+        bs = (batting[batsman_index][1] - 10) / 100 # batsman skill boost
+        Bs = (bowling[bowler_index][2] - 10)/ 100 # bowler skill boost
+        bf = (batting[batsman_index][5] - 10) / 100 # batsman form boost
+        bfi = (batting[batsman_index][6] - 10) / 100 # batsman fitness boost
+        Bf = (bowling[bowler_index][5] - 10) / 100 # bowler form boost
+        Bfi = (bowling[bowler_index][6] - 10) / 100 # bowler fitness boost
+        Ov = abs(10 - int(overs)) / 100 # overs boost
+        wi = (5 - wickets) / 100 # wickets boost
 
         # assinging run probabilities to variables
 
-        dot = 0.1
-        run = 0.25
-        four = 0.12 + (bat_skill * (1 / 4)) + bat_form + bat_fitness + wicket_prob
-        out = 0.05 + (bowl_skill * (1 / 2)) + ((bowl_form + bowl_fitness) * (3 / 4)) - (o - wicket_prob)
-        six = 0.12 + (bat_skill * (3 / 4)) + ((bat_form + bat_fitness) * (3 / 4)) - (bowl_skill * (1 / 4)) + ((bowl_form + bowl_fitness) * (1 / 4)) + wicket_prob
-        s = sum([dot, run, run, four, out, six])
-        if s > 1.0:
-            error = (s - 1.0) / 6
-            dot -= error
-            run -= error
-            out -= (2 * error)
-            three = error
-            six -= (2 * error)
+        dot = 0.15 - ((bs + bf + bfi + Ov + wi) / 20)  + ((Bs + Bf + Bfi) / 12)
+        run = 0.25 - ((bs + bf + bfi + Ov + wi) / 20)  + ((Bs + Bf + Bfi) / 12)
+        three = 0.05 - ((bs + bf + bfi + Ov + wi) / 20)  + ((Bs + Bf + Bfi) / 12)
+        four = 0.10 + ((bs + bf + bfi + Ov + wi) / 5) - ((Bs + Bf + Bfi) / 3)
+        out = 0.10 - ((bs + bf + bfi + Ov + wi) / 5) + ((Bs + Bf + Bfi) / 3)
+        six = 0.10 + ((bs + bf + bfi + Ov + wi) / 5) - ((Bs + Bf + Bfi) / 3)
 
-            # print('top')
+        s = sum([dot, run, run,three, four, out, six])
+        if s < 1:
+            run += ((1 - s) / 2)
         else:
-            three = (1.0 - s)
-            # print('bottom')
-
+            six -= ((s - 1) / 3)
+            out -= ((s - 1) / 3)
+            four -= ((s - 1) / 3)
         # possible outcomes
         r = [0,1,2,3,4,5,6]
-        # print([dot, run, run, three, four, out, six])
+        # print(s, [dot, run, run, three, four, out, six])
         return numpy.random.choice(r, p = [dot, run, run, three, four, out, six])
 
     #############################################################################################
@@ -230,7 +225,6 @@ def innings(team_name, batting, bowling, inning, target=120*6):
             if balls != 6:
                 n = math.floor(bowling_statistics[bowler][1])
                 n += (balls / 10)
-                # bowling_statistics[bowler][1] = n
             else:
                 n = math.floor(bowling_statistics[bowler][1]) + 1.0
 
@@ -253,7 +247,10 @@ def innings(team_name, batting, bowling, inning, target=120*6):
         print('-'*columns)
         print('End of over ' + str(overs) + '\t\t\t' + team_name + ' ' + str(total) + ' for ' + str(wickets))
         print('\n')
-        print(batting_statistics[on_strike][0],' ', batting_statistics[on_strike][1], '(',batting_statistics[on_strike][2], ')', '\t' , batting_statistics[non_strike][0],' ', batting_statistics[non_strike][1], '(',batting_statistics[non_strike][2], ')')
+        osi = batting_statistics[on_strike][6] # on strike player index
+        nsi = batting_statistics[non_strike][6] # non strike player index
+        print(batting[osi][1],'star ', batting_statistics[on_strike][0],'* ', batting_statistics[on_strike][1], '(',batting_statistics[on_strike][2], ')', '\t' ,
+              batting[nsi][1],'star ', batting_statistics[non_strike][0],'* ', batting_statistics[non_strike][1], '(',batting_statistics[non_strike][2], ')')
         print('-'*columns)
         print('\n')
 
